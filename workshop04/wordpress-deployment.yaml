@@ -72,6 +72,8 @@ metadata:
   labels:
     app: wordpress-ing
   name: wordpress-ing
+  annotations:
+    nginx.ingress.kubernetes.io/limit-connections: "5"
 spec:
   ingressClassName: nginx
   defaultBackend:
