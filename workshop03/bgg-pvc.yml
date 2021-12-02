@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: PersistentVolumeChaim
+metadata:
+  name: bgg-pvc
+  labels:
+    name: bgg-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: do-block-storage
+  resources:
+    requests:
+      storage: 1G

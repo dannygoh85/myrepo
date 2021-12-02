@@ -1,0 +1,130 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bggappv1-deploy
+  labels:
+    name: bggappv1-deploy
+spec:
+  replicas: 3
+  selector:
+     matchLabels:
+        name: bggapp-pod
+        version: v1
+  template:
+    metadata:
+      name: bggapp-pod
+      labels:
+        name: bggapp-pod
+        version: v1
+    spec:
+      containers:
+      - name: bggapp-container
+        image: stackupiss/bgg-backend:v1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: bggappv1-port
+          containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: bgg-cm
+        - secretRef:
+            name: bgg-secret
+---
+apiVersion: v1
+kind: Service
+metadata: 
+ name: bggappv1-svc
+ labels:
+    name: bggappv1-svc
+spec:
+  #normally used for internal
+  type: LoadBalancer 
+  selector:
+    name: bggapp-pod
+    version: v1
+  ports:
+  - name: bggapp-svc-port
+    port: 80
+    targetPort: bggappv1-port
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bggappv2-deploy
+  labels:
+    name: bggappv2-deploy
+spec:
+  replicas: 3
+  selector:
+     matchLabels:
+        name: bggapp-pod
+        version: v2
+  template:
+    metadata:
+      name: bggapp-pod
+      labels:
+        name: bggapp-pod
+        version: v2
+    spec:
+      containers:
+      - name: bggapp-container
+        image: stackupiss/bgg-backend:v2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: bggappv2-port
+          containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: bgg-cm
+        - secretRef:
+            name: bgg-secret
+---
+apiVersion: v1
+kind: Service
+metadata: 
+ name: bggappv2-svc
+ labels:
+    name: bggappv2-svc
+spec:
+  #normally used for internal
+  type: ClusterIP 
+  selector:
+    name: bggapp-pod
+    version: v2
+  ports:
+  - name: bggappv2-svc-port
+    port: 80
+    targetPort: bggappv2-port
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: bgg-ing
+  name: bgg-ing
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: default-backend-svc
+      port:
+        number: 3000
+  rules:
+  - host: bgg-188.166.207.237.nip.io
+    http:
+      paths:
+      - path: /v1
+        pathType: Prefix
+        backend:
+          service:
+            name: bggappv1-svc
+            port:
+              number: 3000
+      - path: /v2
+        pathType: Prefix
+        backend:
+          service:
+            name: bggappv2-svc
+            port:
+              number: 3001
